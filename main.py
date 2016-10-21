@@ -1,5 +1,4 @@
-
-# Coded using Anaconda3(Python 3.5.2) and pygame
+﻿# Coded using Anaconda3(Python 3.5.2) and pygame
 
 import pygame
 import copy
@@ -19,13 +18,24 @@ def main():
 
     black = ( 0, 0, 0 )
     white = ( 255, 255, 255 )
+    red = ( 255, 0, 0 )
 
     #the terrain array
     terrain = createArray( width, height )
 
+    #the player
+    player = ( 505, 355 )
+
+    #movement variables
+    moveleft = False
+    moveright = False
+    moveup = False
+    movedown = False
+
     # Framerate
     clock = pygame.time.Clock()
-    fps = 1
+    fps = 15
+    framecount = 0
 
     # Screen
     screen = pygame.display.set_mode((width, height))
@@ -35,31 +45,74 @@ def main():
 
     while not gameExit:
 
+        #player x, y
+        x = (player[0] - 5) // 10
+        y = (player[1] - 5) // 10
+
         # Event handler
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 gameExit = True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    moveleft = True
+                elif event.key == pygame.K_RIGHT:
+                    moveright = True
+                elif event.key == pygame.K_UP:
+                    moveup = True
+                elif event.key == pygame.K_DOWN:
+                    movedown = True
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT:
+                    moveleft = False
+                elif event.key == pygame.K_RIGHT:
+                    moveright = False
+                elif event.key == pygame.K_UP:
+                    moveup = False
+                elif event.key == pygame.K_DOWN:
+                    movedown = False
+        
+        if framecount >= 10:
+            #shift the terrain down
+            terrain = shiftArray( terrain )
 
-        #shift the terrain down
-        terrain = shiftArray( terrain )
+            #shift the player down
+            player = ( player[0] - 10, player[1] )
 
-        #create the new layer of terrain
-        terrain = addNewColumn( terrain )
+            #create the new layer of terrain
+            terrain = addNewColumn( terrain )
+            
+            framecount = 0
+
+        #move the player
+        if moveleft and terrain[x-1][y] == 0:
+            player = ( player[0] - 10, player[1] )
+        elif moveright and terrain[x+1][y] == 0:
+            player = ( player[0] + 10, player[1] )
+        elif moveup and terrain[x][(y-1)%len(terrain[0])] == 0:
+            player = ( player[0], (player[1] - 10) % height )
+        elif movedown and terrain[x][(y+1)%len(terrain[0])] == 0:
+            player = ( player[0], (player[1] + 10) % height )
 
         #draw the terrain
         for i in range( len( terrain ) ):
             for j in range( len( terrain[0] ) ):
                 rect = ( i*10, j*10, 10, 10 )
                 if terrain[i][j]:
-                    screen.fill( black, rect )
-                else:
                     screen.fill( white, rect )
+                else:
+                    screen.fill( black, rect )
+
+	#draw the player
+        pygame.draw.circle( screen, red, player, 5, 0 )
 
         # Update the screen
         pygame.display.update()
 
         # Set the fps
         clock.tick(fps)
+
+        framecount += 1
 
 def createArray( width, height ):
     #creates the initial terrain for the game
